@@ -47,11 +47,11 @@ onAuthStateChanged(auth, async (user)=>{
   else { CURRENT_USER = { matricula: user.email.split('@')[0], isAdmin: ADMINS.has(user.email.split('@')[0]) }; }
   
   document.getElementById('data').value = todayIso();
-  document.getElementById('btnLogout').addEventListener('click', ()=> signOut(auth));
-  document.getElementById('btnChangePwd').addEventListener('click', changePasswordHandler);
-  document.getElementById('washForm').addEventListener('submit', saveWash);
-  document.getElementById('filtroPrefixo').addEventListener('input', filterWeekly);
-  document.getElementById('filtroMinCount').addEventListener('input', filterWeekly);
+  document.getElementById('btnLogout')?.addEventListener('click', ()=> signOut(auth));
+  document.getElementById('btnChangePwd')?.addEventListener('click', changePasswordHandler);
+  document.getElementById('washForm')?.addEventListener('submit', saveWash);
+  document.getElementById('filtroPrefixo')?.addEventListener('input', filterWeekly);
+  document.getElementById('filtroMinCount')?.addEventListener('input', filterWeekly);
 
   await loadWeekly();
   await loadMonthlyTotals();
@@ -101,6 +101,7 @@ let lastWeekRows = [];
 
 async function loadWeekly(){
   const tbody = document.querySelector('#tabelaSemanal tbody');
+  if(!tbody) return;
   tbody.innerHTML = '';
   const { from, to } = getWeekBounds(new Date());
   const q1 = query(colRelatorios, where('data','>=',from), where('data','<=',to));
@@ -131,6 +132,7 @@ async function loadWeekly(){
 
 async function fillLessThanTwo(counts){
   const tbody = document.querySelector('#tabelaMenos2 tbody');
+  if(!tbody) return;
   tbody.innerHTML = '';
 
   const list = [];
@@ -163,8 +165,8 @@ async function fillLessThanTwo(counts){
 }
 
 function filterWeekly(){
-  const val = document.getElementById('filtroPrefixo').value.trim();
-  const raw = document.getElementById('filtroMinCount').value; const minCount = Number(raw ? raw : 0);
+  const val = document.getElementById('filtroPrefixo')?.value.trim();
+  const raw = document.getElementById('filtroMinCount')?.value; const minCount = Number(raw ? raw : 0);
   const counts = {};
   lastWeekRows.forEach(r=> counts[r.prefixo] = (counts[r.prefixo]||0)+1);
   const trs = document.querySelectorAll('#tabelaSemanal tbody tr');
@@ -188,10 +190,10 @@ async function loadMonthlyTotals(){
     else if(t==='Higienização') hig++;
     else exc++;
   });
-  document.getElementById('cntSimples').textContent = simples;
-  document.getElementById('cntHig').textContent = hig;
-  document.getElementById('cntExc').textContent = exc;
-  document.getElementById('cntTotal').textContent = simples+hig+exc;
+  document.getElementById('cntSimples')?.textContent = simples;
+  document.getElementById('cntHig')?.textContent = hig;
+  document.getElementById('cntExc')?.textContent = exc;
+  document.getElementById('cntTotal')?.textContent = simples+hig+exc;
 }
 
 document.getElementById('btnWeeklyPdf')?.addEventListener('click', ()=> exportTableToPDF('#tabelaSemanal', 'relatorio-semanal.pdf'));
@@ -199,7 +201,7 @@ document.getElementById('btnWeeklyExcel')?.addEventListener('click', ()=> export
 initMenos2Toggle();
 
 function applyFiltroMenos2(){
-  const val = (document.getElementById('filtroMenos2').value || '').trim();
+  const val = (document.getElementById('filtroMenos2')?.value || '').trim();
   const trs = document.querySelectorAll('#tabelaMenos2 tbody tr');
   trs.forEach(tr=>{
     const px = tr.children[0]?.textContent?.trim() || '';
@@ -285,9 +287,6 @@ function initMenos2Toggle(){
   document.getElementById('btnGraficoTotaisMes')?.addEventListener('click', ()=>{
     window.open('./mes-grafico.html','_blank');
   });
-  document.getElementById('btnPPTTotaisMes')?.addEventListener('click', ()=>{
-    window.open('./mes-grafico.html','_blank');
-  });
   document.getElementById('btnComparativoSemanas')?.addEventListener('click', ()=>{
     window.open('./comparativo.html','_blank');
   });
@@ -349,6 +348,6 @@ function initMenos2Toggle(){
     if(info) info.textContent = "Total de lavagens no mês: " + total;
   }
 
-  // agora espera o carregamento completo da página
+  // chama sempre no load
   window.addEventListener('load', drawProdInline);
 })();
