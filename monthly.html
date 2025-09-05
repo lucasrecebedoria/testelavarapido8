@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MoveBuss • Relatório Mensal</title>
+<link rel="icon" href="./assets/favicon.ico" />
+<link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="left">
+      <a href="./app.html" class="metal btn-outline">← Voltar</a>
+      <button id="btnLogout" class="metal btn-outline">Logout</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="right"><img src="./assets/logo.png" class="logo" alt="logo"/></div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <h3 style="margin:0">Relatório mensal</h3>
+        <div class="spacer"></div>
+        <label class="small">Mês</label>
+        <input id="mesInput" type="month" />
+        <a href="./mes-grafico.html" target="_blank" class="metal btn-outline">Abrir gráfico do mês</a>
+        <a href="./comparativo.html" target="_blank" class="metal btn-outline">Comparativo semanal</a>
+        <button id="btnMonthlyPdf" class="metal btn-outline">Salvar em PDF</button>
+        <button id="btnMonthlyExcel" class="metal btn-outline">Baixar em Excel</button>
+      </div>
+      <table class="table" id="tabelaMensal">
+        <thead><tr><th>Data</th><th>Hora</th><th>Prefixo</th><th>Tipo</th><th>Usuário</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>Developed by Lucas L Custodio, V1</footer>
+  <script type="module" src="./monthly.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</body>
+</html>
