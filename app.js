@@ -292,43 +292,63 @@ function initMenos2Toggle(){
     window.open('./comparativo.html','_blank');
   });
 
-  // Gráfico inline
+  // Gráfico inline de produtividade
   async function drawProdInline(){
+    const ctx = document.getElementById('chartProdInline');
+    if(!ctx || !window.Chart) return;
+
     const now = new Date();
     const from = new Date(now.getFullYear(), now.getMonth(), 1);
     const to = new Date(now.getFullYear(), now.getMonth()+1, 1);
     const toYMD = (dt)=> dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,'0')+"-"+String(dt.getDate()).padStart(2,'0');
+
     const q1 = query(colRelatorios, where('data','>=', toYMD(from)), where('data','<', toYMD(to)));
     const snap = await getDocs(q1);
-    const counts = [];
+
     const diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    for(let i=0;i<diasNoMes;i++) counts[i]=0;
+    const counts = new Array(diasNoMes).fill(0);
+
     snap.forEach(ss=>{
-      const d=ss.data();
-      const created = d.created_at ? (typeof d.created_at.toDate === 'function' ? d.created_at.toDate() : new Date(d.created_at)) : new Date(d.data+"T00:00:00");
+      const d = ss.data();
+      const created = d.created_at 
+        ? (typeof d.created_at.toDate === 'function' ? d.created_at.toDate() : new Date(d.created_at)) 
+        : new Date(d.data+"T00:00:00");
       const dia = created.getDate();
       if(dia>=1 && dia<=diasNoMes) counts[dia-1]++;
     });
-    const ctx = document.getElementById('chartProdInline');
-    if(window.Chart && ctx){
-      if(window._chartProdInline) window._chartProdInline.destroy();
-      window._chartProdInline = new Chart(ctx, {
-        type:'bar',
-        data:{
-          labels: counts.map((_,i)=> String(i+1)),
-          datasets:[{ label:'Lavagens por dia', data: counts, backgroundColor:'#4e79a7', barThickness:14 }]
+
+    if(window._chartProdInline) window._chartProdInline.destroy();
+    window._chartProdInline = new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels: counts.map((_,i)=> String(i+1)),
+        datasets:[{ 
+          label:'Lavagens por dia', 
+          data: counts, 
+          backgroundColor:'#4e79a7', 
+          barThickness:14 
+        }]
+      },
+      options:{
+        responsive:true,
+        plugins:{ 
+          datalabels:{ 
+            anchor:'end', 
+            align:'start', 
+            formatter:(v)=> v>0?v:"", 
+            font:{weight:'bold'} 
+          } 
         },
-        options:{
-          responsive:true,
-          plugins:{ datalabels:{ anchor:'end', align:'start', formatter:(v)=> v>0?v:"", font:{weight:'bold'} } },
-          scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
-        },
-        plugins:[ChartDataLabels]
-      });
-    }
+        scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } }
+      },
+      plugins:[ChartDataLabels]
+    });
+
     const total = counts.reduce((a,b)=>a+b,0);
     const info = document.getElementById('totalLavagensProd');
     if(info) info.textContent = "Total de lavagens no mês: " + total;
   }
-  document.addEventListener('DOMContentLoaded', drawProdInline);
+
+  // agora espera o carregamento completo da página
+  window.addEventListener('load', drawProdInline);
 })();

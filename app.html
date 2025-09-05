@@ -113,7 +113,11 @@
             <div><span class="badge badge-lightgreen">Higienização</span> <span id="cntHig">0</span></div>
             <div><span class="badge badge-pink">Exceções</span> <span id="cntExc">0</span></div>
             <div class="small">Atualiza em tempo real</div>
-<div class="actions-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button id="btnGraficoTotaisMes" class="metal btn-outline">Gráfico do mês</button><button id="btnComparativoSemanas" class="metal btn-outline">Comparativo Semanas</button></div><div style="display:none"><canvas id="chartTotaisMes" width="400" height="240"></canvas></div>
+            <div class="actions-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <button id="btnGraficoTotaisMes" class="metal btn-outline">Gráfico do mês</button>
+              <button id="btnComparativoSemanas" class="metal btn-outline">Comparativo Semanas</button>
+            </div>
+            <div style="display:none"><canvas id="chartTotaisMes" width="400" height="240"></canvas></div>
           </div>
         </div>
       </div>
@@ -121,7 +125,6 @@
   </main>
 
   <footer>Developed by Lucas L Custodio, V1</footer>
-  <script type="module" src="./app.js"></script>
 
   <!-- Export libs -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -132,5 +135,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.min.js"></script>
 
+  <!-- Seu app precisa rodar DEPOIS das libs -->
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
