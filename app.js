@@ -191,6 +191,7 @@ async function loadMonthlyTotals(){
   document.getElementById('cntSimples').textContent = simples;
   document.getElementById('cntHig').textContent = hig;
   document.getElementById('cntExc').textContent = exc;
+  document.getElementById('cntTotal').textContent = simples+hig+exc;
 }
 
 document.getElementById('btnWeeklyPdf')?.addEventListener('click', ()=> exportTableToPDF('#tabelaSemanal', 'relatorio-semanal.pdf'));
@@ -245,11 +246,8 @@ function initMenos2Toggle(){
   }
 }
 
-
-
-// === Injected: time badges + monthly chart buttons ===
+// === Decoradores de hora e gráficos ===
 (function(){
-  // Mapeia hora -> classe
   function timeBadgeClass(hhmm){
     try{
       if(!hhmm) return 'badge';
@@ -283,7 +281,7 @@ function initMenos2Toggle(){
     decorateTimeCells('#tabelaMenos2');
   });
 
-  // Redirecionar para telas dedicadas
+  // Botões de gráficos
   document.getElementById('btnGraficoTotaisMes')?.addEventListener('click', ()=>{
     window.open('./mes-grafico.html','_blank');
   });
@@ -294,62 +292,23 @@ function initMenos2Toggle(){
     window.open('./comparativo.html','_blank');
   });
 
-  // Gráfico de produtividade inline (mês atual)
-  function toYMD(dt){
-    const y=dt.getFullYear(), m=String(dt.getMonth()+1).padStart(2,'0'), d=String(dt.getDate()).padStart(2,'0');
-    return `${y}-${m}-${d}`;
-  }
-  function periodIdxFromDate(dt){
-    const hh=dt.getHours(), mm=dt.getMinutes();
-    const t=hh*60+mm;
-    if(t>=6*60 && t<=11*60+59) return 0;
-    if(t>=12*60 && t<=17*60+59) return 1;
-    return 2;
-  }
-  async function fetchMonthRows(){
-    try{
-      const { colRelatorios, query, where, getDocs } = await import('./firebase.js');
-      const now = new Date();
-      const from = new Date(now.getFullYear(), now.getMonth(), 1);
-      const to = new Date(now.getFullYear(), now.getMonth()+1, 1);
-      const q1 = query(colRelatorios, where('data','>=', toYMD(from)), where('data','<', toYMD(to)));
-      const snap = await getDocs(q1);
-      const rows=[];
-      snap.forEach(ss=>{
-        const d=ss.data();
-        const created = d.created_at ? (typeof d.created_at.toDate === 'function' ? d.created_at.toDate() : new Date(d.created_at)) : new Date();
-        rows.push({ created });
-      });
-      return rows;
-    }catch(e){ console.error(e); return []; }
-  }
-  
-
-async function drawProdInline(){
-    // Busca lavagens do mês atual e agrupa por dia
-    async function fetchMonthRows(){
-      try{
-        const { colRelatorios, query, where, getDocs } = await import('./firebase.js');
-        const now = new Date();
-        const from = new Date(now.getFullYear(), now.getMonth(), 1);
-        const to = new Date(now.getFullYear(), now.getMonth()+1, 1);
-        const toYMD = (dt)=> dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,'0')+"-"+String(dt.getDate()).padStart(2,'0');
-        const q1 = query(colRelatorios, where('data','>=', toYMD(from)), where('data','<', toYMD(to)));
-        const snap = await getDocs(q1);
-        const rows = [];
-        snap.forEach(ss=>{
-          const d = ss.data();
-          const created = d.created_at ? (typeof d.created_at.toDate === 'function' ? d.created_at.toDate() : new Date(d.created_at)) : new Date(d.data+"T00:00:00");
-          rows.push({ created });
-        });
-        return rows;
-      }catch(e){ console.error(e); return []; }
-    }
-    const rows = await fetchMonthRows();
+  // Gráfico inline
+  async function drawProdInline(){
     const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    const to = new Date(now.getFullYear(), now.getMonth()+1, 1);
+    const toYMD = (dt)=> dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,'0')+"-"+String(dt.getDate()).padStart(2,'0');
+    const q1 = query(colRelatorios, where('data','>=', toYMD(from)), where('data','<', toYMD(to)));
+    const snap = await getDocs(q1);
+    const counts = [];
     const diasNoMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-    const counts = new Array(diasNoMes).fill(0);
-    rows.forEach(r=>{ const d = r.created.getDate(); if(d>=1 && d<=diasNoMes) counts[d-1]++; });
+    for(let i=0;i<diasNoMes;i++) counts[i]=0;
+    snap.forEach(ss=>{
+      const d=ss.data();
+      const created = d.created_at ? (typeof d.created_at.toDate === 'function' ? d.created_at.toDate() : new Date(d.created_at)) : new Date(d.data+"T00:00:00");
+      const dia = created.getDate();
+      if(dia>=1 && dia<=diasNoMes) counts[dia-1]++;
+    });
     const ctx = document.getElementById('chartProdInline');
     if(window.Chart && ctx){
       if(window._chartProdInline) window._chartProdInline.destroy();
@@ -357,12 +316,7 @@ async function drawProdInline(){
         type:'bar',
         data:{
           labels: counts.map((_,i)=> String(i+1)),
-          datasets:[{ 
-            label:'Lavagens por dia', 
-            data: counts, 
-            backgroundColor: '#4e79a7', 
-            barThickness: 14 
-          }]
+          datasets:[{ label:'Lavagens por dia', data: counts, backgroundColor:'#4e79a7', barThickness:14 }]
         },
         options:{
           responsive:true,
@@ -375,57 +329,6 @@ async function drawProdInline(){
     const total = counts.reduce((a,b)=>a+b,0);
     const info = document.getElementById('totalLavagensProd');
     if(info) info.textContent = "Total de lavagens no mês: " + total;
-},
-        plugins:[ChartDataLabels]
-      });
-    }
-  }catch(e){ console.error(e); }
-}
-
-  document.getElementById('btnToggleProdInline')?.addEventListener('click', ()=>{
-    const box = document.getElementById('prodInline');
-    if(!box) return;
-    const vis = box.style.display !== 'none';
-    box.style.display = vis ? 'none' : 'block';
-    if(!vis) drawProdInline();
-  });
-  document.getElementById('btnCloseProdInline')?.addEventListener('click', ()=>{
-    const box = document.getElementById('prodInline'); if(box) box.style.display='none';
-  });
-})();
-;
-
-// === Injected: soma total no card Total do mês ===
-(async function(){
-  try{
-    const { colRelatorios, query, where, getDocs } = await import('./firebase.js');
-    function toYMD(dt){ return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,'0')+"-"+String(dt.getDate()).padStart(2,'0'); }
-    const now = new Date();
-    const from = new Date(now.getFullYear(), now.getMonth(), 1);
-    const to = new Date(now.getFullYear(), now.getMonth()+1, 1);
-    const q1 = query(colRelatorios, where('data','>=', toYMD(from)), where('data','<', toYMD(to)));
-    const snap = await getDocs(q1);
-    let total=0; snap.forEach(()=>total++);
-    const el = document.getElementById('somaTotalMes');
-    if(el) el.textContent = "Soma total de lavagens no mês: "+total;
-  }catch(e){ console.error(e); }
-})();
-
-
-// === Injected: soma total no mês (DOM only) ===
-(function(){
-  function fillSomaTotalMes(){
-    try{
-      const s = parseInt(document.getElementById('cntSimples')?.textContent||'0',10);
-      const h = parseInt(document.getElementById('cntHig')?.textContent||'0',10);
-      const e = parseInt(document.getElementById('cntExc')?.textContent||'0',10);
-      const total = s+h+e;
-      const el = document.getElementById('somaTotalMes');
-      if(el) el.textContent = "Soma total de lavagens no mês: " + total;
-    }catch(err){ console.error(err); }
   }
-  document.addEventListener('DOMContentLoaded', fillSomaTotalMes);
-  // Reaplicar quando os contadores forem atualizados dinamicamente
-  const obs = new MutationObserver(fillSomaTotalMes);
-  obs.observe(document.body, { childList:true, subtree:true });
+  document.addEventListener('DOMContentLoaded', drawProdInline);
 })();
